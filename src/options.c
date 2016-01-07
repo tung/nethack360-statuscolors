@@ -197,11 +197,6 @@ static struct Bool_Opt {
     { "sparkle", &flags.sparkle, TRUE, SET_IN_GAME },
     { "splash_screen", &iflags.wc_splash_screen, TRUE, DISP_IN_GAME }, /*WC*/
     { "standout", &flags.standout, FALSE, SET_IN_GAME },
-#if defined(STATUS_VIA_WINDOWPORT) && defined(STATUS_HILITES)
-    { "statushilites", &iflags.use_status_hilites, TRUE, SET_IN_GAME },
-#else
-    { "statushilites", &iflags.use_status_hilites, FALSE, DISP_IN_GAME },
-#endif
     { "tiled_map", &iflags.wc_tiled_map, PREFER_TILED, DISP_IN_GAME }, /*WC*/
     { "time", &flags.time, FALSE, SET_IN_GAME },
 #ifdef TIMED_DELAY
@@ -3176,25 +3171,6 @@ boolean tinitial, tfrom_file;
             return;
         }
     }
-#if defined(STATUS_VIA_WINDOWPORT) && defined(STATUS_HILITES)
-    /* hilite fields in status prompt */
-    if (match_optname(opts, "hilite_status", 13, TRUE)) {
-        if (duplicate)
-            complain_about_duplicate(opts, 1);
-        op = string_for_opt(opts, TRUE);
-        if (op && negated) {
-            clear_status_hilites(tfrom_file);
-            return;
-        } else if (!op) {
-            /* a value is mandatory */
-            badoption(opts);
-            return;
-        }
-        if (!set_status_hilites(op, tfrom_file))
-            badoption(opts);
-        return;
-    }
-#endif
 
 #if defined(BACKWARD_COMPAT)
     fullname = "DECgraphics";
@@ -3615,20 +3591,6 @@ doset()
     Sprintf(buf, fmtstr_doset_add_menu, any.a_int ? "" : "    ",
             "menucolors", buf2);
     add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ATR_NONE, buf, MENU_UNSELECTED);
-#ifdef STATUS_VIA_WINDOWPORT
-#ifdef STATUS_HILITES
-    any.a_int = -2;
-    get_status_hilites(buf2, 60);
-    if (!*buf2)
-        Sprintf(buf2, "%s", "(none)");
-    if (!iflags.menu_tab_sep)
-        Sprintf(buf, fmtstr_doset_add_menu, any.a_int ? "" : "    ",
-                "status_hilites", buf2);
-    else
-        Sprintf(buf, fmtstr_doset_add_menu_tab, "status_hilites", buf2);
-    add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ATR_NONE, buf, MENU_UNSELECTED);
-#endif
-#endif
     any.a_int = -1;
     Sprintf(buf2, n_currently_set, count_ape_maps((int *) 0, (int *) 0));
     Sprintf(buf, fmtstr_doset_add_menu, any.a_int ? "" : "    ",
@@ -3657,18 +3619,6 @@ doset()
                 /* -2 due to -1 offset for select_menu() */
                 (void) special_handling("autopickup_exception", setinitial,
                                         fromfile);
-#ifdef STATUS_VIA_WINDOWPORT
-#ifdef STATUS_HILITES
-            } else if (opt_indx == -3) {
-                /* -3 due to -1 offset for select_menu() */
-                if (!status_hilite_menu()) {
-                    pline("Bad status hilite(s) specified.");
-                } else {
-                    if (wc2_supported("status_hilites"))
-                        preference_update("status_hilites");
-                }
-#endif
-#endif
             } else if (opt_indx == -4) {
                     (void) special_handling("menucolors", setinitial,
                                             fromfile);
@@ -5380,9 +5330,6 @@ struct wc_Opt wc2_options[] = { { "fullscreen", WC2_FULLSCREEN },
                                 { "softkeyboard", WC2_SOFTKEYBOARD },
                                 { "wraptext", WC2_WRAPTEXT },
                                 { "use_darkgray", WC2_DARKGRAY },
-#ifdef STATUS_VIA_WINDOWPORT
-                                { "hilite_status", WC2_HILITE_STATUS },
-#endif
                                 { (char *) 0, 0L } };
 
 /*

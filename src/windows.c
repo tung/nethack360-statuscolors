@@ -515,9 +515,6 @@ static struct window_procs hup_procs = {
     hup_void_ndecl,                                   /* status_init */
     hup_void_ndecl,                                   /* status_finish */
     genl_status_enablefield, hup_status_update,
-#ifdef STATUS_HILITES
-    genl_status_threshold,
-#endif
 #endif /* STATUS_VIA_WINDOWPORT */
     genl_can_suspend_no,
 };
@@ -920,16 +917,6 @@ genericptr_t ptr;
     putmixed(WIN_STATUS, 0, newbot2); /* putmixed() due to GOLD glyph */
 }
 
-#ifdef STATUS_HILITES
-void
-genl_status_threshold(fldidx, thresholdtype, threshold, behavior, under, over)
-int fldidx, thresholdtype;
-int behavior, under, over;
-anything threshold;
-{
-    return;
-}
-#endif /* STATUS_HILITES */
 #endif /* STATUS_VIA_WINDOWPORT */
 
 /*windows.c*/
