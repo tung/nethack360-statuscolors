@@ -100,15 +100,15 @@ typedef struct mi {
 
 #ifdef STATUS_VIA_WINDOWPORT
 
+/* Maximum number of conditions that can apply simultaneously. */
+/* hunger conf foodpois ill blind stun hallu slime burden */
+#define MAX_STATUS_CONDS 9
+
 struct status_info {
     char name[10];
     char title[20];
     int st, st_extra;
-    int dx;
-    int co;
-    int in;
-    int wi;
-    int ch;
+    int dx, co, in, wi, ch;
     char align[8];          /* "Chaotic"/"Neutral" */
     long score;
 
@@ -123,12 +123,30 @@ struct status_info {
     long exp_points;
     long turns;
 
-    /* hunger conf foodpois ill blind stun hallu slime burden */
-    char conds[9][11];      /* "Overloaded" */
+    char conds[MAX_STATUS_CONDS][11]; /* "Overloaded" */
 
     boolean show_score;
     boolean show_exp_points;
     boolean show_turns;
+};
+
+struct status_color_attr {
+    int color;
+    int attr_bits;  /* a bit for every ATR_* value */
+};
+
+struct status_info_colors {
+    struct status_color_attr st, dx, co, in, wi, ch;
+    struct status_color_attr score;
+
+    struct status_color_attr gold;
+    struct status_color_attr hp;
+    struct status_color_attr pw;
+    struct status_color_attr ac;
+    struct status_color_attr exp_level, exp_points;
+    struct status_color_attr turns;
+
+    struct status_color_attr conds[MAX_STATUS_CONDS];
 };
 
 #endif /* STATUS_VIA_WINDOWPORT */
