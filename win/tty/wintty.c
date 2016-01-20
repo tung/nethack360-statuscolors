@@ -3358,7 +3358,7 @@ const struct status_info_colors *sic;
         putstat_l(" T:", &sic->turns, "%ld", si->turns);
     tty_putstr(WIN_STATUS, 0, " ");
     i = 0;
-    while (i < SIZE(si->conds) && si->conds[0]) {
+    while (i < SIZE(si->conds) && si->conds[i][0]) {
         tty_putstr(WIN_STATUS, 0, " ");
         start_status_color_attr(&sic->conds[i]);
         tty_putstr(WIN_STATUS, 0, si->conds[i]);

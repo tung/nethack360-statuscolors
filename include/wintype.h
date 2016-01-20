@@ -105,7 +105,7 @@ typedef struct mi {
 #define MAX_STATUS_CONDS 9
 
 struct status_info {
-    char name[10];
+    char name[11];
     char title[20];
     int st, st_extra;
     int dx, co, in, wi, ch;

@@ -869,8 +869,7 @@ const struct status_info_colors *sic;
     if (si->show_turns)
         Sprintf(nb = eos(nb), " T:%ld", si->turns);
     i = 0;
-    while (i < sizeof(si->conds) / sizeof(si->conds[0]) &&
-           si->conds[i][0]) {
+    while (i < SIZE(si->conds) && si->conds[i][0]) {
         Sprintf(nb = eos(nb), " %s", si->conds[i]);
         i++;
     }
