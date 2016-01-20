@@ -3306,20 +3306,40 @@ const struct status_info *si;
 const struct status_info_colors *sic;
 {
     char buf[MAXCO];
-    int len, i;
+    int name_title_len, rest_len;
+    int i;
 
     /* First line. */
     curs(WIN_STATUS, 1, 0);
 
-    /* 32 characters for the name and title. */
+    /* Name and title. */
     Sprintf(buf, "%s the %s", si->name, si->title);
     tty_putstr(WIN_STATUS, 0, buf);
-    len = strlen(si->name) + 5 + strlen(si->title);
-    if (len < 32) {
-        Sprintf(buf, "%*s", 32 - len, " ");
-        tty_putstr(WIN_STATUS, 0, buf);
+    name_title_len = strlen(si->name) + 5 + strlen(si->title);
+
+    /* Calculate padding between name-and-title and the rest of the first line.
+     * If the rest of the line is too long then omit the padding entirely.
+     */
+    Sprintf(buf, "  St:%d%s Dx:%d Co:%d In:%d Wi:%d Ch:%d  %s", si->st,
+            (si->st_extra ? "/xx" : ""), si->dx, si->co, si->in, si->wi, si->ch,
+            si->align);
+    if (si->show_score)
+        Sprintf(eos(buf), " S:%ld", si->score);
+    rest_len = strlen(buf);
+
+    if (name_title_len + rest_len < (CO - 1)) {
+        /* Pad the name and title to up to 30 characters. */
+        int pad = (CO - 1) - (name_title_len + rest_len);
+        if (pad > (30 - name_title_len))
+            pad = 30 - name_title_len;
+        if (pad > 0) {
+            Sprintf(buf, "%*s", pad, " ");
+            tty_putstr(WIN_STATUS, 0, buf);
+        }
     }
 
+    /* The rest of the first line. */
+    tty_putstr(WIN_STATUS, 0, "  ");
     if (si->st_extra == 100) {
         putstat_i("St:", &sic->st, "%d/**", si->st);
     } else if (si->st_extra > 0) {
