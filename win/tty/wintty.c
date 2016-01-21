@@ -3312,10 +3312,11 @@ int hp;
 int hp_max;
 int color;
 {
-    /* The full bar length is the length of the name and title. */
-    int name_title_len = strlen(name_title);
+    int full_bar_len;
+    int bar_pos;
+    boolean partial_bar;
+    char tmpc = '\0';
 
-    /* Sanitize hitpoint values for calculations. */
     if (hp_max < 1)
         hp_max = 1;
     if (hp < 0)
@@ -3323,49 +3324,41 @@ int color;
     if (hp > hp_max)
         hp = hp_max;
 
-    /* Draw the hitpointbar. */
-    tty_putstr(WIN_STATUS, 0, "[");
-    if (hp == hp_max) {
-        /* Full bar. */
-#ifdef TEXTCOLOR
-        if (color != NO_COLOR)
-            term_start_color(color);
-#endif
-        term_start_attr(ATR_INVERSE);
-        tty_putstr(WIN_STATUS, 0, name_title);
-        term_end_attr(ATR_INVERSE);
-#ifdef TEXTCOLOR
-        if (color != NO_COLOR)
-            term_end_color();
-#endif
-    } else if (hp == 0) {
-        /* Empty bar. */
-        tty_putstr(WIN_STATUS, 0, name_title);
-    } else {
-        /* Partially filled bar. */
-        char tmpc;
-        int bar_pos = name_title_len * hp / hp_max;
-        if (bar_pos < 1)
-            bar_pos = 1;
-        if (bar_pos >= name_title_len)
-            bar_pos = name_title_len - 1;
-#ifdef TEXTCOLOR
-        if (color != NO_COLOR)
-            term_start_color(color);
-#endif
-        /* Null terminate the first part and draw it inverse. */
+    full_bar_len = strlen(name_title);
+    bar_pos = ((full_bar_len * hp) + hp_max / 2) / hp_max;
+    if (bar_pos < 1 && hp > 0)
+        bar_pos = 1;
+    if (bar_pos >= full_bar_len && hp < hp_max)
+        bar_pos = full_bar_len - 1;
+
+    partial_bar = bar_pos > 0 && bar_pos < full_bar_len;
+    if (partial_bar) {
+        /* Split the string with a null; we'll restore it later. */
         tmpc = name_title[bar_pos];
         name_title[bar_pos] = '\0';
+    }
+
+    /* Draw the hitpointbar. */
+    tty_putstr(WIN_STATUS, 0, "[");
+    if (bar_pos > 0) {
+#ifdef TEXTCOLOR
+        if (color != NO_COLOR)
+            term_start_color(color);
+#endif
         term_start_attr(ATR_INVERSE);
-        tty_putstr(WIN_STATUS, 0, name_title);
-        term_end_attr(ATR_INVERSE);
-        /* Undo the null and draw the rest without inverse. */
-        name_title[bar_pos] = tmpc;
-        tty_putstr(WIN_STATUS, 0, &name_title[bar_pos]);
+    }
+    tty_putstr(WIN_STATUS, 0, name_title);
+    if (bar_pos > 0) {
 #ifdef TEXTCOLOR
         if (color != NO_COLOR)
             term_end_color();
 #endif
+        term_end_attr(ATR_INVERSE);
+    }
+    if (partial_bar) {
+        /* Restore nulled character and draw the rest of the bar. */
+        name_title[bar_pos] = tmpc;
+        tty_putstr(WIN_STATUS, 0, &name_title[bar_pos]);
     }
     tty_putstr(WIN_STATUS, 0, "]");
 }
