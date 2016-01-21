@@ -413,10 +413,10 @@ STATIC_DCL struct status_color_attr * FDECL(get_status_color_attr,
 /* Book-keeping functions. */
 STATIC_DCL boolean FDECL(add_num_rule,
         (enum num_ruleset_id, enum num_ruleset_field_id, long,
-         const struct status_color_attr *, boolean));
+         const struct status_color_attr *, BOOLEAN_P));
 STATIC_DCL boolean FDECL(add_str_rule,
         (struct str_rule *, int, const char *, const struct status_color_attr *,
-         boolean));
+         BOOLEAN_P));
 STATIC_DCL void FDECL(remove_num_rule,
         (enum num_ruleset_id, enum num_ruleset_field_id, int));
 STATIC_DCL void FDECL(remove_str_rule, (struct str_rule *, int, const char *));
@@ -448,8 +448,8 @@ STATIC_DCL boolean FDECL(parse_status_color_rule, (char *));
 
 /* Status colors option/customization menus. */
 STATIC_DCL void FDECL(menu_num_breadcrumbs,
-        (char *, enum num_ruleset_id, enum num_ruleset_field_id, boolean, long,
-         int));
+        (char *, enum num_ruleset_id, enum num_ruleset_field_id, BOOLEAN_P,
+         long, int));
 STATIC_DCL void FDECL(menu_str_breadcrumbs, (char *, const char *, int));
 STATIC_DCL void FDECL(display_raw_num_rule,
         (winid, enum num_ruleset_id, enum num_ruleset_field_id,
@@ -745,8 +745,9 @@ boolean allow_replace;
         prev->next = new_rule;
     else
         *list = new_rule;
-
     new_rule->next = curr;
+
+    return TRUE;
 }
 
 STATIC_OVL boolean
@@ -773,6 +774,8 @@ boolean allow_replace;
             }
         }
     }
+
+    return FALSE;
 }
 
 STATIC_OVL void
@@ -1499,7 +1502,7 @@ const char *prefix;
     } else {
         *attr_bits = 0;
         for (i = 0; i < num_picks; i++)
-            *attr_bits |= (1 << picks[i].item.a_int - 1);
+            *attr_bits |= (1 << (picks[i].item.a_int - 1));
         free(picks);
     }
     return TRUE;
