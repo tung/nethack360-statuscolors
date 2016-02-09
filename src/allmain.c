@@ -461,6 +461,9 @@ boolean resuming;
 #ifdef MAIL
             ckmailstatus();
 #endif
+#if defined(STATUS_VIA_WINDOWPORT) && defined(STATUS_COLORS)
+            flip_status_info();
+#endif
             rhack((char *) 0);
         }
         if (u.utotype)       /* change dungeon level */
@@ -499,7 +502,7 @@ display_gamewindows()
 {
     WIN_MESSAGE = create_nhwindow(NHW_MESSAGE);
 #ifdef STATUS_VIA_WINDOWPORT
-    status_initialize(0);
+    status_initialize();
 #else
     WIN_STATUS = create_nhwindow(NHW_STATUS);
 #endif

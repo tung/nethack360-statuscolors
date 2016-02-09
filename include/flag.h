@@ -209,7 +209,9 @@ struct instance_flags {
     uchar num_pad_mode;
     boolean echo;             /* 1 to echo characters */
     boolean use_menu_color;       /* use color in menus; only if wc_color */
-    boolean use_status_hilites;   /* use color in status line */
+#if defined(STATUS_VIA_WINDOWPORT) && defined(STATUS_COLORS)
+    boolean use_status_colors;    /* use color in status area */
+#endif
     boolean use_background_glyph; /* use background glyph when appropriate */
     boolean hilite_pile;          /* mark piles of objects with a hilite */
 #if 0
@@ -309,6 +311,7 @@ struct instance_flags {
     boolean wc2_wraptext;       /* wrap text */
     boolean wc2_selectsaved;    /* display a menu of user's saved games */
     boolean wc2_darkgray; /* try to use dark-gray color for black glyphs */
+    boolean wc2_hitpointbar;    /* show graphical bar representing hit points */
     boolean cmdassist;    /* provide detailed assistance for some commands */
     boolean clicklook;    /* allow right-clicking for look */
     boolean obsolete; /* obsolete options can point at this, it isn't used */

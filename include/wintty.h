@@ -217,10 +217,8 @@ E char *NDECL(tty_get_color_string);
 #endif
 #ifdef STATUS_VIA_WINDOWPORT
 E void NDECL(tty_status_init);
-E void FDECL(tty_status_update, (int, genericptr_t, int, int));
-#ifdef STATUS_HILITES
-E void FDECL(tty_status_threshold, (int, int, anything, int, int, int));
-#endif
+E void FDECL(tty_status_update, (const struct status_info *,
+                                 const struct status_info_colors *));
 #endif
 
 /* other defs that really should go away (they're tty specific) */

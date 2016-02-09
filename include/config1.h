@@ -129,6 +129,8 @@
 #define USE_STDARG
 #define NEED_VARARGS
 
+#define strncasecmp(x,y,z) _strnicmp(x,y,z)
+
 #ifndef WIN_CE
 #define STRNCMPI
 #define STRCMPI

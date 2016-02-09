@@ -1399,6 +1399,9 @@ static const char *build_opts[] = {
 #ifdef SHELL
     "shell command",
 #endif
+#if defined(STATUS_VIA_WINDOWPORT) && defined(STATUS_COLORS)
+    "status colors",
+#endif
 #ifdef SUSPEND
     "suspend command",
 #endif

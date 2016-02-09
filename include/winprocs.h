@@ -77,12 +77,8 @@ struct window_procs {
 #ifdef STATUS_VIA_WINDOWPORT
     void NDECL((*win_status_init));
     void NDECL((*win_status_finish));
-    void FDECL((*win_status_enablefield),
-               (int, const char *, const char *, BOOLEAN_P));
-    void FDECL((*win_status_update), (int, genericptr_t, int, int));
-#ifdef STATUS_HILITES
-    void FDECL((*win_status_threshold), (int, int, anything, int, int, int));
-#endif
+    void FDECL((*win_status_update),
+               (const struct status_info *, const struct status_info_colors *));
 #endif
     boolean NDECL((*win_can_suspend));
 };
@@ -165,11 +161,7 @@ extern
 /* there is a status_initialize() in botl.c,
  * which calls win_status_init() directly; same with status_finish.
  */
-#define status_enablefield (*windowprocs.win_status_enablefield)
 #define status_update (*windowprocs.win_status_update)
-#ifdef STATUS_HILITES
-#define status_threshold (*windowprocs.win_status_threshold)
-#endif
 #endif
 
 /*
@@ -239,10 +231,9 @@ extern
 #define WC2_FULLSCREEN 0x01L /* 01 display full screen                    */
 #define WC2_SOFTKEYBOARD 0x02L /* 02 software keyboard */
 #define WC2_WRAPTEXT 0x04L /* 03 wrap long lines of text                */
-#define WC2_HILITE_STATUS \
-    0x08L /* 04 hilite fields in status                */
-#define WC2_SELECTSAVED 0x10L /* 05 saved game selection menu */
-#define WC2_DARKGRAY 0x20L /* 06 use bold black for black glyphs        */
+#define WC2_SELECTSAVED 0x08L /* 04 saved game selection menu */
+#define WC2_DARKGRAY 0x10L /* 05 use bold black for black glyphs        */
+#define WC2_HITPOINTBAR 0x20L /* 06 show bar representing hit points */
                            /* 26 free bits */
 
 #define ALIGN_LEFT 1
@@ -386,13 +377,9 @@ struct chain_procs {
 #ifdef STATUS_VIA_WINDOWPORT
     void FDECL((*win_status_init), (CARGS));
     void FDECL((*win_status_finish), (CARGS));
-    void FDECL((*win_status_enablefield),
-               (CARGS, int, const char *, const char *, BOOLEAN_P));
-    void FDECL((*win_status_update), (CARGS, int, genericptr_t, int, int));
-#ifdef STATUS_HILITES
-    void FDECL((*win_status_threshold),
-               (CARGS, int, int, anything, int, int, int));
-#endif
+    void FDECL((*win_status_update),
+               (CARGS, const struct status_info *,
+                const struct status_info_colors *));
 #endif
     boolean FDECL((*win_can_suspend), (CARGS));
 };

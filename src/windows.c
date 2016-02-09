@@ -460,7 +460,8 @@ static short FDECL(hup_set_font_name, (winid, char *));
 static char *NDECL(hup_get_color_string);
 #endif /* CHANGE_COLOR */
 #ifdef STATUS_VIA_WINDOWPORT
-static void FDECL(hup_status_update, (int, genericptr_t, int, int));
+static void FDECL(hup_status_update, (const struct status_info *,
+                                      const struct status_info_colors *));
 #endif
 
 static int NDECL(hup_int_ndecl);
@@ -514,10 +515,7 @@ static struct window_procs hup_procs = {
 #ifdef STATUS_VIA_WINDOWPORT
     hup_void_ndecl,                                   /* status_init */
     hup_void_ndecl,                                   /* status_finish */
-    genl_status_enablefield, hup_status_update,
-#ifdef STATUS_HILITES
-    genl_status_threshold,
-#endif
+    hup_status_update,
 #endif /* STATUS_VIA_WINDOWPORT */
     genl_can_suspend_no,
 };
@@ -750,9 +748,9 @@ hup_get_color_string(VOID_ARGS)
 #ifdef STATUS_VIA_WINDOWPORT
 /*ARGSUSED*/
 static void
-hup_status_update(idx, ptr, chg, percent)
-int idx UNUSED, chg UNUSED, percent UNUSED;
-genericptr_t ptr UNUSED;
+hup_status_update(si, sic)
+const struct status_info *si UNUSED;
+const struct status_info_colors *sic UNUSED;
 {
     return;
 }
@@ -806,22 +804,11 @@ const char *string UNUSED;
 /* genl backward compat stuff                                               */
 /****************************************************************************/
 
-const char *status_fieldnm[MAXBLSTATS];
-const char *status_fieldfmt[MAXBLSTATS];
-char *status_vals[MAXBLSTATS];
-boolean status_activefields[MAXBLSTATS];
 NEARDATA winid WIN_STATUS;
 
 void
 genl_status_init()
 {
-    int i;
-    for (i = 0; i < MAXBLSTATS; ++i) {
-        status_vals[i] = (char *) alloc(MAXCO);
-        *status_vals[i] = '\0';
-        status_activefields[i] = FALSE;
-        status_fieldfmt[i] = (const char *) 0;
-    }
     /* Use a window for the genl version; backward port compatibility */
     WIN_STATUS = create_nhwindow(NHW_STATUS);
     display_nhwindow(WIN_STATUS, FALSE);
@@ -830,106 +817,69 @@ genl_status_init()
 void
 genl_status_finish()
 {
-    /* tear down routine */
-    int i;
-
-    /* free alloc'd memory here */
-    for (i = 0; i < MAXBLSTATS; ++i) {
-        if (status_vals[i])
-            free((genericptr_t) status_vals[i]);
-        status_vals[i] = (char *) 0;
-    }
+    return;
 }
 
 void
-genl_status_enablefield(fieldidx, nm, fmt, enable)
-int fieldidx;
-const char *nm;
-const char *fmt;
-boolean enable;
-{
-    status_fieldfmt[fieldidx] = fmt;
-    status_fieldnm[fieldidx] = nm;
-    status_activefields[fieldidx] = enable;
-}
-
-void
-genl_status_update(idx, ptr, chg, percent)
-int idx, chg, percent;
-genericptr_t ptr;
+genl_status_update(si, sic)
+const struct status_info *si;
+const struct status_info_colors *sic;
 {
     char newbot1[MAXCO], newbot2[MAXCO];
-    long cond, *condptr = (long *) ptr;
-    register int i;
-    char *text = (char *) ptr;
+    char *nb;
+    int len, i;
 
-    enum statusfields fieldorder[2][15] = {
-        { BL_TITLE, BL_STR, BL_DX, BL_CO, BL_IN, BL_WI, BL_CH, BL_ALIGN,
-          BL_SCORE, BL_FLUSH, BL_FLUSH, BL_FLUSH, BL_FLUSH, BL_FLUSH,
-          BL_FLUSH },
-        { BL_LEVELDESC, BL_GOLD, BL_HP, BL_HPMAX, BL_ENE, BL_ENEMAX,
-          BL_AC, BL_XP, BL_EXP, BL_HD, BL_TIME, BL_HUNGER,
-          BL_CAP, BL_CONDITION, BL_FLUSH }
-    };
+    /* Ignore colors and attributes. */
+    (void) sic;
 
-    if (idx != BL_FLUSH) {
-        if (!status_activefields[idx])
-            return;
-        switch (idx) {
-        case BL_CONDITION:
-            cond = *condptr;
-            *status_vals[idx] = '\0';
-            if (cond & BL_MASK_BLIND)
-                Strcat(status_vals[idx], " Blind");
-            if (cond & BL_MASK_CONF)
-                Strcat(status_vals[idx], " Conf");
-            if (cond & BL_MASK_FOODPOIS)
-                Strcat(status_vals[idx], " FoodPois");
-            if (cond & BL_MASK_ILL)
-                Strcat(status_vals[idx], " Ill");
-            if (cond & BL_MASK_STUNNED)
-                Strcat(status_vals[idx], " Stun");
-            if (cond & BL_MASK_HALLU)
-                Strcat(status_vals[idx], " Hallu");
-            if (cond & BL_MASK_SLIMED)
-                Strcat(status_vals[idx], " Slime");
-            break;
-        default:
-            Sprintf(status_vals[idx],
-                    status_fieldfmt[idx] ? status_fieldfmt[idx] : "%s", text);
-            break;
-        }
-    }
-
-    /* This genl version updates everything on the display, everytime */
+    /* first row */
     newbot1[0] = '\0';
-    for (i = 0; fieldorder[0][i] != BL_FLUSH; ++i) {
-        int idx1 = fieldorder[0][i];
-        if (status_activefields[idx1])
-            Strcat(newbot1, status_vals[idx1]);
+    nb = newbot1;
+
+    /* Grant 32 characters for the name and title. */
+    Sprintf(nb = eos(nb), "%s the %s", si->name, si->title);
+    len = strlen(si->name) + 5 + strlen(si->title);
+    if (len < 32)
+        Sprintf(nb = eos(nb), "%*s", 32 - len, " ");
+
+    Sprintf(nb = eos(nb), "St:%d", si->st);
+    if (si->st_extra > 99) {
+        Sprintf(nb = eos(nb), "/**");
+    } else if (si->st_extra > 0) {
+        Sprintf(nb = eos(nb), "/%02d", si->st_extra);
     }
+    Sprintf(nb = eos(nb), " Dx:%d Co:%d In:%d Wi:%d Ch:%d",
+            si->dx, si->co, si->in, si->wi, si->ch);
+    Sprintf(nb = eos(nb), "  %s", si->align);
+    if (si->show_score)
+        Sprintf(nb = eos(nb), " S:%ld", si->score);
+
+    /* second row */
     newbot2[0] = '\0';
-    for (i = 0; fieldorder[1][i] != BL_FLUSH; ++i) {
-        int idx2 = fieldorder[1][i];
-        if (status_activefields[idx2])
-            Strcat(newbot2, status_vals[idx2]);
+    nb = newbot2;
+
+    Sprintf(nb = eos(nb), "%s", si->dlvl);
+    Sprintf(nb = eos(nb), " %s:%-2ld", si->gold_sym, si->gold);
+    Sprintf(nb = eos(nb), " HP:%d(%d)", si->hp, si->hp_max);
+    Sprintf(nb = eos(nb), " Pw:%d(%d)", si->pw, si->pw_max);
+    Sprintf(nb = eos(nb), " AC:%-2d", si->ac);
+    Sprintf(nb = eos(nb), " %s:%d", si->exp_label, si->exp_level);
+    if (si->show_exp_points)
+        Sprintf(nb = eos(nb), "/%ld", si->exp_points);
+    if (si->show_turns)
+        Sprintf(nb = eos(nb), " T:%ld", si->turns);
+    i = 0;
+    while (i < SIZE(si->conds) && si->conds[i][0]) {
+        Sprintf(nb = eos(nb), " %s", si->conds[i]);
+        i++;
     }
+
     curs(WIN_STATUS, 1, 0);
     putstr(WIN_STATUS, 0, newbot1);
     curs(WIN_STATUS, 1, 1);
     putmixed(WIN_STATUS, 0, newbot2); /* putmixed() due to GOLD glyph */
 }
 
-#ifdef STATUS_HILITES
-void
-genl_status_threshold(fldidx, thresholdtype, threshold, behavior, under, over)
-int fldidx, thresholdtype;
-int behavior, under, over;
-anything threshold;
-{
-    return;
-}
-#endif /* STATUS_HILITES */
 #endif /* STATUS_VIA_WINDOWPORT */
 
 /*windows.c*/

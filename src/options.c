@@ -128,6 +128,7 @@ static struct Bool_Opt {
     { "help", &flags.help, TRUE, SET_IN_GAME },
     { "hilite_pet", &iflags.wc_hilite_pet, FALSE, SET_IN_GAME }, /*WC*/
     { "hilite_pile", &iflags.hilite_pile, FALSE, SET_IN_GAME },
+    { "hitpointbar", &iflags.wc2_hitpointbar, FALSE, SET_IN_GAME }, /*WC*/
 #ifndef MAC
     { "ignintr", &flags.ignintr, FALSE, SET_IN_GAME },
 #else
@@ -197,10 +198,8 @@ static struct Bool_Opt {
     { "sparkle", &flags.sparkle, TRUE, SET_IN_GAME },
     { "splash_screen", &iflags.wc_splash_screen, TRUE, DISP_IN_GAME }, /*WC*/
     { "standout", &flags.standout, FALSE, SET_IN_GAME },
-#if defined(STATUS_VIA_WINDOWPORT) && defined(STATUS_HILITES)
-    { "statushilites", &iflags.use_status_hilites, TRUE, SET_IN_GAME },
-#else
-    { "statushilites", &iflags.use_status_hilites, FALSE, DISP_IN_GAME },
+#if defined(STATUS_VIA_WINDOWPORT) && defined(STATUS_COLORS)
+    { "statuscolors", &iflags.use_status_colors, FALSE, SET_IN_GAME },
 #endif
     { "tiled_map", &iflags.wc_tiled_map, PREFER_TILED, DISP_IN_GAME }, /*WC*/
     { "time", &flags.time, FALSE, SET_IN_GAME },
@@ -2832,6 +2831,21 @@ boolean tinitial, tfrom_file;
         return;
     }
 
+#if defined(STATUS_VIA_WINDOWPORT) && defined(STATUS_COLORS)
+    /* Not to be confused with "statuscolors" (trailing 's'). */
+    /* Rule configuration, e.g. STATUSCOLOR=HP%100:green,HP%50:red */
+    fullname = "statuscolor";
+    if (match_optname(opts, fullname, 11, TRUE)) {
+        if (negated) {
+            bad_negation(fullname, FALSE);
+        } else if ((op = string_for_env_opt(fullname, opts, FALSE)) != 0) {
+            if (!parse_status_color_line(op))
+                badoption(opts);
+        }
+        return;
+    }
+#endif
+
     fullname = "suppress_alert";
     if (match_optname(opts, fullname, 4, TRUE)) {
         if (duplicate)
@@ -3176,25 +3190,6 @@ boolean tinitial, tfrom_file;
             return;
         }
     }
-#if defined(STATUS_VIA_WINDOWPORT) && defined(STATUS_HILITES)
-    /* hilite fields in status prompt */
-    if (match_optname(opts, "hilite_status", 13, TRUE)) {
-        if (duplicate)
-            complain_about_duplicate(opts, 1);
-        op = string_for_opt(opts, TRUE);
-        if (op && negated) {
-            clear_status_hilites(tfrom_file);
-            return;
-        } else if (!op) {
-            /* a value is mandatory */
-            badoption(opts);
-            return;
-        }
-        if (!set_status_hilites(op, tfrom_file))
-            badoption(opts);
-        return;
-    }
-#endif
 
 #if defined(BACKWARD_COMPAT)
     fullname = "DECgraphics";
@@ -3336,9 +3331,6 @@ boolean tinitial, tfrom_file;
                 || (boolopt[i].addr) == &flags.showscore
 #endif
                 ) {
-#ifdef STATUS_VIA_WINDOWPORT
-                status_initialize(REASSESS_ONLY);
-#endif
                 context.botl = TRUE;
             } else if ((boolopt[i].addr) == &flags.invlet_constant) {
                 if (flags.invlet_constant)
@@ -3615,19 +3607,12 @@ doset()
     Sprintf(buf, fmtstr_doset_add_menu, any.a_int ? "" : "    ",
             "menucolors", buf2);
     add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ATR_NONE, buf, MENU_UNSELECTED);
-#ifdef STATUS_VIA_WINDOWPORT
-#ifdef STATUS_HILITES
+#if defined(STATUS_VIA_WINDOWPORT) && defined(STATUS_COLORS)
     any.a_int = -2;
-    get_status_hilites(buf2, 60);
-    if (!*buf2)
-        Sprintf(buf2, "%s", "(none)");
-    if (!iflags.menu_tab_sep)
-        Sprintf(buf, fmtstr_doset_add_menu, any.a_int ? "" : "    ",
-                "status_hilites", buf2);
-    else
-        Sprintf(buf, fmtstr_doset_add_menu_tab, "status_hilites", buf2);
+    Sprintf(buf2, n_currently_set, count_status_colors());
+    Sprintf(buf, fmtstr_doset_add_menu, any.a_int ? "": "    ",
+            "statuscolors", buf2);
     add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ATR_NONE, buf, MENU_UNSELECTED);
-#endif
 #endif
     any.a_int = -1;
     Sprintf(buf2, n_currently_set, count_ape_maps((int *) 0, (int *) 0));
@@ -3657,17 +3642,10 @@ doset()
                 /* -2 due to -1 offset for select_menu() */
                 (void) special_handling("autopickup_exception", setinitial,
                                         fromfile);
-#ifdef STATUS_VIA_WINDOWPORT
-#ifdef STATUS_HILITES
+#if defined(STATUS_VIA_WINDOWPORT) && defined(STATUS_COLORS)
             } else if (opt_indx == -3) {
                 /* -3 due to -1 offset for select_menu() */
-                if (!status_hilite_menu()) {
-                    pline("Bad status hilite(s) specified.");
-                } else {
-                    if (wc2_supported("status_hilites"))
-                        preference_update("status_hilites");
-                }
-#endif
+                status_colors_menu();
 #endif
             } else if (opt_indx == -4) {
                     (void) special_handling("menucolors", setinitial,
@@ -5380,9 +5358,7 @@ struct wc_Opt wc2_options[] = { { "fullscreen", WC2_FULLSCREEN },
                                 { "softkeyboard", WC2_SOFTKEYBOARD },
                                 { "wraptext", WC2_WRAPTEXT },
                                 { "use_darkgray", WC2_DARKGRAY },
-#ifdef STATUS_VIA_WINDOWPORT
-                                { "hilite_status", WC2_HILITE_STATUS },
-#endif
+                                { "hitpointbar", WC2_HITPOINTBAR },
                                 { (char *) 0, 0L } };
 
 /*

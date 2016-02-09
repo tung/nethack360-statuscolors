@@ -151,15 +151,14 @@ E int FDECL(describe_level, (char *));
 E const char *FDECL(rank_of, (int, SHORT_P, BOOLEAN_P));
 E void NDECL(bot);
 #ifdef STATUS_VIA_WINDOWPORT
-E void FDECL(status_initialize, (BOOLEAN_P));
-E void NDECL(status_finish);
-E void FDECL(status_notify_windowport, (BOOLEAN_P));
-#ifdef STATUS_HILITES
-E boolean FDECL(set_status_hilites, (char *op, BOOLEAN_P));
-E void FDECL(clear_status_hilites, (BOOLEAN_P));
-E char *FDECL(get_status_hilites, (char *, int));
-E boolean NDECL(status_hilite_menu);
+#ifdef STATUS_COLORS
+E int NDECL(count_status_colors);
+E boolean FDECL(parse_status_color_line, (char *));
+E void NDECL(status_colors_menu);
+E void NDECL(flip_status_info);
 #endif
+E void NDECL(status_initialize);
+E void NDECL(status_finish);
 #endif
 
 /* ### cmd.c ### */
@@ -2650,12 +2649,8 @@ E void NDECL(nhwindows_hangup);
 #ifdef STATUS_VIA_WINDOWPORT
 E void NDECL(genl_status_init);
 E void NDECL(genl_status_finish);
-E void FDECL(genl_status_enablefield,
-             (int, const char *, const char *, BOOLEAN_P));
-E void FDECL(genl_status_update, (int, genericptr_t, int, int));
-#ifdef STATUS_HILITES
-E void FDECL(genl_status_threshold, (int, int, anything, int, int, int));
-#endif
+E void FDECL(genl_status_update,
+             (const struct status_info *, const struct status_info_colors *));
 #endif
 
 /* ### wizard.c ### */
