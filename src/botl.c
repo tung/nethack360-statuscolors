@@ -1226,7 +1226,7 @@ char *start;
     for (i = 0; i < MAX_NRS; i++) {
         label = status_rulesets[i].label;
         label_len = strlen(label);
-        if (!strncasecmp(start, label, label_len)) {
+        if (!strncmpi(start, label, label_len)) {
             /* Prevent false matches based on prefix. */
             if ((start[label_len] >= 'A' && start[label_len] <= 'Z')
                 || (start[label_len] >= 'a' && start[label_len] <= 'z'))
@@ -1240,7 +1240,7 @@ char *start;
         struct str_rule *rule = &status_color_rules.conds[i];
         label = rule->val;
         label_len = strlen(label);
-        if (!strncasecmp(start, label, label_len)) {
+        if (!strncmpi(start, label, label_len)) {
             /* Prevent false matches based on prefix. */
             if (start[label_len] != ':')
                 continue;
